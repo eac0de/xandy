@@ -1,4 +1,4 @@
-package sendersms
+package smssender
 
 import (
 	"fmt"
@@ -6,25 +6,29 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-type SenderSMS struct {
+type ISMSSender interface {
+	Send(destination string, text string) error
+}
+
+type SMSSender struct {
 	number                  string
 	autorizationHeaderValue string
 	client                  *resty.Client
 }
 
-func NewSenderSMS(number string, apiKey string, client *resty.Client) *SenderSMS {
+func New(number string, apiKey string, client *resty.Client) *SMSSender {
 	if client == nil {
 		client = resty.New()
 	}
 	autorizationHeaderValue := fmt.Sprintf("Bearer %s", apiKey)
-	return &SenderSMS{
+	return &SMSSender{
 		number:                  number,
 		autorizationHeaderValue: autorizationHeaderValue,
 		client:                  client,
 	}
 }
 
-func (sender *SenderSMS) Send(destination string, text string) error {
+func (sender *SMSSender) Send(destination string, text string) error {
 	json := struct {
 		Number      string `json:"number"`
 		Destination string `json:"destination"`
@@ -36,26 +40,26 @@ func (sender *SenderSMS) Send(destination string, text string) error {
 	}
 	req := sender.client.
 		R().
-		SetHeader("Content-Type", "application/json").
+		SetHeader("Authorization", sender.autorizationHeaderValue).
 		SetBody(json)
-	res, err := req.Post("https://api.exolve.ru/messaging/v1/SendSMS")
+	resp, err := req.Post("https://api.exolve.ru/messaging/v1/SendSMS")
 	if err != nil {
 		return err
 	}
-	if res.StatusCode() > 399 {
-		return fmt.Errorf("SenderSMS error: %s", res.String())
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("SMSSender error: %s", resp.String())
 	}
 	return nil
 }
 
-type SenderSMSMock struct {
+type SMSSenderMock struct {
 }
 
-func NewSenderSMSMock() *SenderSMSMock {
-	return &SenderSMSMock{}
+func NewSenderSMSMock() *SMSSenderMock {
+	return &SMSSenderMock{}
 }
 
-func (sender *SenderSMSMock) Send(destination string, text string) error {
+func (sender *SMSSenderMock) Send(destination string, text string) error {
 	fmt.Println(text)
 	return nil
 }
