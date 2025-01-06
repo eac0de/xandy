@@ -1,0 +1,55 @@
+services:
+  xandy_auth:
+    build:
+      context: auth
+      dockerfile: Dockerfile
+    command: ./auth
+    env_file:
+      - envs/auth.env
+    depends_on:
+      - "xandy_auth_data"
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    restart: always
+
+  xandy_auth_data:
+    image: postgres:17-alpine
+    restart: always
+    env_file:
+      - envs/auth.env
+    ports:
+      - "5555:5432"
+    expose:
+      - "5432"
+    volumes:
+      - ./data/xandy_auth_data:/var/lib/postgresql/data
+
+  xandy:
+    build:
+      context: xandy
+      dockerfile: Dockerfile
+    command: ./xandy
+    env_file:
+      - envs/xandy.env
+    depends_on:
+      - "xandy_data"
+      - "xandy_auth"
+    ports:
+      - "8081:8081"
+      - "9091:9091"
+    volumes:
+      - ./data/user_files:/user_files
+    restart: always
+
+  xandy_data:
+    image: postgres:17-alpine
+    restart: always
+    env_file:
+      - envs/xandy.env
+    ports:
+      - "5556:5432"
+    expose:
+      - "5432"
+    volumes:
+      - ./data/xandy_data:/var/lib/postgresql/data
