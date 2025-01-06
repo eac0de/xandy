@@ -12,7 +12,6 @@ import (
 	"github.com/eac0de/xandy/auth/internal/grpcserver"
 	"github.com/eac0de/xandy/auth/internal/services"
 	"github.com/eac0de/xandy/auth/internal/storage"
-	"github.com/eac0de/xandy/shared/pkg/emailsender"
 
 	"github.com/gin-gonic/gin"
 )
@@ -67,15 +66,15 @@ func main() {
 	}
 	defer authStorage.Close()
 
-	var emailSender emailsender.IEmailSender
+	var smsSender smssender.ISMSSender
 	if cfg.IsDev {
-		emailSender = emailsender.NewMock()
+		smsSender = smssender.NewMock()
 	} else {
-		emailSender = emailsender.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword)
+		smsSender = smssender.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword)
 	}
 
 	sessionService := services.NewSessionService(cfg.JWTSecretKey, cfg.JWTAccessExp, cfg.JWTRefreshExp, authStorage)
-	authService := services.NewAuthService(authStorage, emailSender)
+	authService := services.NewAuthService(authStorage, smsSender)
 
 	gprcAuthServer := grpcserver.NewAuthGRPCServer(cfg.GPRCServerAddress, sessionService)
 	go gprcAuthServer.Run()

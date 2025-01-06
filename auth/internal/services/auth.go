@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/eac0de/xandy/auth/internal/models"
-	"github.com/eac0de/xandy/shared/pkg/emailsender"
 	"github.com/eac0de/xandy/shared/pkg/httperror"
+	"github.com/eac0de/xandy/shared/pkg/smssender"
 
 	"github.com/google/uuid"
 )
@@ -29,10 +29,10 @@ type AuthStore interface {
 
 type AuthService struct {
 	AuthStore   AuthStore
-	emailSender emailsender.IEmailSender
+	emailSender smssender.ISMSSender
 }
 
-func NewAuthService(authStore AuthStore, emailSender emailsender.IEmailSender) *AuthService {
+func NewAuthService(authStore AuthStore, emailSender smssender.ISMSSender) *AuthService {
 	return &AuthService{
 		AuthStore:   authStore,
 		emailSender: emailSender,
