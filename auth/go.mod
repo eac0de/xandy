@@ -4,6 +4,7 @@ go 1.23.3
 
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
+	github.com/eac0de/xandy/shared v0.0.0-20250106194302-e2c04371b042
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/uuid v1.6.0
