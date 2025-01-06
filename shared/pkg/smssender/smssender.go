@@ -11,42 +11,38 @@ type ISMSSender interface {
 }
 
 type SMSSender struct {
-	number                  string
-	autorizationHeaderValue string
-	client                  *resty.Client
+	number string
+	token  string
+	client *resty.Client
 }
 
-func New(number string, apiKey string, client *resty.Client) *SMSSender {
-	if client == nil {
-		client = resty.New()
-	}
-	autorizationHeaderValue := fmt.Sprintf("Bearer %s", apiKey)
+func New(number string, token string) *SMSSender {
 	return &SMSSender{
-		number:                  number,
-		autorizationHeaderValue: autorizationHeaderValue,
-		client:                  client,
+		number: number,
+		token:  token,
+		client: resty.New(),
 	}
 }
 
-func (sender *SMSSender) Send(destination string, text string) error {
+func (s *SMSSender) Send(destination string, text string) error {
 	json := struct {
 		Number      string `json:"number"`
 		Destination string `json:"destination"`
 		Text        string `json:"text"`
 	}{
-		Number:      sender.number,
+		Number:      s.number,
 		Destination: destination,
 		Text:        text,
 	}
-	req := sender.client.
+	resp, err := s.client.
 		R().
-		SetHeader("Authorization", sender.autorizationHeaderValue).
-		SetBody(json)
-	resp, err := req.Post("https://api.exolve.ru/messaging/v1/SendSMS")
+		SetAuthToken(s.token).
+		SetBody(json).
+		Post("https://api.exolve.ru/messaging/v1/SendSMS")
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode() != 200 {
+	if resp.StatusCode() > 299 {
 		return fmt.Errorf("SMSSender error: %s", resp.String())
 	}
 	return nil
@@ -55,11 +51,11 @@ func (sender *SMSSender) Send(destination string, text string) error {
 type SMSSenderMock struct {
 }
 
-func NewSenderSMSMock() *SMSSenderMock {
+func NewMock() *SMSSenderMock {
 	return &SMSSenderMock{}
 }
 
-func (sender *SMSSenderMock) Send(destination string, text string) error {
+func (s *SMSSenderMock) Send(destination string, text string) error {
 	fmt.Println(text)
 	return nil
 }
